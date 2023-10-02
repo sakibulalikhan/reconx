@@ -3,7 +3,6 @@
 ![Author](https://img.shields.io/badge/Author-@sakibulalikhan-blue)
 ![GitHub last commit](https://img.shields.io/github/last-commit/sakibulalikhan/reconx)
 ![GitHub](https://img.shields.io/github/license/sakibulalikhan/reconx)
-![GitHub Sponsors](https://img.shields.io/github/sponsors/sakibulalikhan)
 
 ReconX is a powerful Bash script designed for advanced subdomain reconnaissance. It automates various subdomain discovery and analysis techniques to help you gather information about a target domain, including subdomains, alive domains, potential subdomain takeovers, open ports, JavaScript file scraping, and more.
 
