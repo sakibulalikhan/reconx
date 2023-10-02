@@ -6,6 +6,9 @@
 
 ReconX is a powerful Bash script designed for advanced subdomain reconnaissance. It automates various subdomain discovery and analysis techniques to help you gather information about a target domain, including subdomains, alive domains, potential subdomain takeovers, open ports, JavaScript file scraping, and more.
 
+![image](https://github.com/sakibulalikhan/reconx/assets/75080608/e9473884-5003-4c20-a506-359d02e3cb36)
+
+
 ## Table of Contents
 
 - [Features](#features)
