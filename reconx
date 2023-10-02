@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# Print script header
+cat << "EOF"
+
+___  __ \_____ _____________ _______ __  |/ /
+__  /_/ /_  _ \_  ___/_  __ \__  __ \__    / 
+_  _, _/ /  __// /__  / /_/ /_  / / /_    |  
+/_/ |_|  \___/ \___/  \____/ /_/ /_/ /_/|_|                                             
++----------------------------------------------------+
+|           Author : @sakibulalikhan                 |
++----------------------------------------------------+
+
+EOF
+
 # Check if a URL is provided as an argument
 if [ -z "$1" ]; then
     echo "Usage: $0 <target_url>"
@@ -47,19 +60,6 @@ tools=("assetfinder" "amass" "jq" "httprobe" "subjack" "nmap" "naabu" "waybackur
 for tool in "${tools[@]}"; do
     check_tool "$tool"
 done
-
-# Print script header
-cat << "EOF"
-
-___  __ \_____ _____________ _______ __  |/ /
-__  /_/ /_  _ \_  ___/_  __ \__  __ \__    / 
-_  _, _/ /  __// /__  / /_/ /_  / / /_    |  
-/_/ |_|  \___/ \___/  \____/ /_/ /_/ /_/|_|                                             
-+----------------------------------------------------+
-|           Author : @sakibulalikhan                 |
-+----------------------------------------------------+
-
-EOF
 
 # Perform subdomain reconnaissance
 
