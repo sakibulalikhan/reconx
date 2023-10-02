@@ -1,0 +1,118 @@
+#!/bin/bash
+
+# Check if a URL is provided as an argument
+if [ -z "$1" ]; then
+    echo "Usage: $0 <target_url>"
+    exit 1
+fi
+
+# Function to check if a file exists, and create it if it doesn't
+check_and_create_file() {
+    local file="$1"
+    if [ ! -f "$file" ]; then
+        touch "$file"
+    fi
+}
+
+target_url="$1"
+output_dir="$target_url/recon"
+
+# Create necessary directories if they don't exist
+mkdir -p "$output_dir/gowitness"
+mkdir -p "$output_dir/mantra"
+mkdir -p "$output_dir/gau"
+mkdir -p "$output_dir/scans"
+mkdir -p "$output_dir/httprobe"
+mkdir -p "$output_dir/potential_takeovers"
+mkdir -p "$output_dir/wayback/params"
+mkdir -p "$output_dir/wayback/extensions"
+
+# Initialize necessary files if they don't exist
+check_and_create_file "$output_dir/httprobe/alive.txt"
+check_and_create_file "$output_dir/final.txt"
+check_and_create_file "$output_dir/gau/gauJS.txt"
+check_and_create_file "$output_dir/mantra/api_cred.txt"
+check_and_create_file "$output_dir/potential_takeovers/potential_takeovers.txt"
+
+# Function to check if a tool is installed
+check_tool() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        echo >&2 "Error: $1 is not installed. Please install it before running this script."
+        exit 1
+    fi
+}
+
+# Check for required tools
+tools=("assetfinder" "amass" "jq" "httprobe" "subjack" "nmap" "naabu" "waybackurls" "gowitness" "mantra")
+for tool in "${tools[@]}"; do
+    check_tool "$tool"
+done
+
+# Print script header
+cat << "EOF"
+
+___  __ \_____ _____________ _______ __  |/ /
+__  /_/ /_  _ \_  ___/_  __ \__  __ \__    / 
+_  _, _/ /  __// /__  / /_/ /_  / / /_    |  
+/_/ |_|  \___/ \___/  \____/ /_/ /_/ /_/|_|                                             
++----------------------------------------------------+
+|           Author : @sakibulalikhan                 |
++----------------------------------------------------+
+
+EOF
+
+# Perform subdomain reconnaissance
+
+echo "[+] Harvesting subdomains with assetfinder..."
+assetfinder "$target_url" >> "$output_dir/recon/assets.txt"
+cat "$output_dir/recon/assets.txt" | grep "$target_url" >> "$output_dir/final.txt"
+rm "$output_dir/recon/assets.txt"
+
+echo "[+] Double-checking for subdomains with amass..."
+amass enum -d "$target_url" >> "$output_dir/recon/f.txt"
+sort -u "$output_dir/recon/f.txt" >> "$output_dir/recon/final.txt"
+rm "$output_dir/recon/f.txt"
+
+echo "[+] Harvesting subdomains using SSL cert with crt.sh..."
+curl -s "https://crt.sh/?q=%.$target_url&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u >> "$output_dir/final.txt"
+
+echo "[+] Probing for alive domains..."
+cat "$output_dir/final.txt" | sort -u | httprobe -s -p http:81 -p https:443 | sed 's/https\?:\/\///' | tr -d ':443' >> "$output_dir/httprobe/a.txt"
+sort -u "$output_dir/httprobe/a.txt" > "$output_dir/httprobe/alive.txt"
+rm "$output_dir/httprobe/a.txt"
+
+echo "[+] Checking for possible subdomain takeover..."
+subjack -w "$output_dir/final.txt" -t 100 -timeout 30 -ssl -o "$output_dir/potential_takeovers/potential_takeovers.txt"
+
+echo "[+] Scanning for open ports with Naabu..."
+naabu -hL "$output_dir/httprobe/alive.txt" -verify -ec -rate 9000 -retries 1 -p 0-65535 -oA "$output_dir/scans/naabu-full.txt"
+
+echo "[+] Scraping JS files with Gau..."
+cat "$output_dir/final.txt" | gau | grep -iE '\.js' | grep -ivE '\.json' | sort -u >> "$output_dir/gau/gauJS.txt"
+
+echo "[+] Scraping Mantra API key or cred..."
+cat "$output_dir/gau/gauJS.txt" | mantra >> "$output_dir/mantra/api_cred.txt"
+
+echo "[+] Scraping wayback data..."
+cat "$output_dir/final.txt" | waybackurls >> "$output_dir/wayback/wayback_output.txt"
+sort -u "$output_dir/wayback/wayback_output.txt"
+
+echo "[+] Pulling and compiling all possible parameters found in wayback data..."
+cat "$output_dir/wayback/wayback_output.txt" | grep '?*=' | cut -d '=' -f 1 | sort -u >> "$output_dir/wayback/params/wayback_params.txt"
+
+echo "[+] Pulling and compiling js/php/aspx/jsp/json files from wayback output..."
+for line in $(cat "$output_dir/wayback/wayback_output.txt"); do
+    ext="${line##*.}"
+    case "$ext" in
+        js|html|json|php|aspx)
+            echo "$line" >> "$output_dir/wayback/extensions/$ext.txt"
+            ;;
+    esac
+done
+
+echo "[+] Capturing screenshots with gowitness..."
+gowitness file -s "$output_dir/final.txt" -d "$output_dir/gowitness/screenshots" -t 50
+
+echo "[+] Screenshots captured by gowitness are saved in: $output_dir/gowitness/screenshots"
+
+echo "[+] Script completed. & Thanks for using ReconX @sakibulalikhan."
