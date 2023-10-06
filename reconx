@@ -7,9 +7,9 @@ ___  __ \_____ _____________ _______ __  |/ /
 __  /_/ /_  _ \_  ___/_  __ \__  __ \__    / 
 _  _, _/ /  __// /__  / /_/ /_  / / /_    |  
 /_/ |_|  \___/ \___/  \____/ /_/ /_/ /_/|_|                                             
-+----------------------------------------------------+
-|           Author : @sakibulalikhan                 |
-+----------------------------------------------------+
++------------------------------------------------+
+|         Author : @sakibulalikhan               |
++------------------------------------------------+
 
 EOF
 
@@ -37,6 +37,7 @@ mkdir -p "$output_dir/gau"
 mkdir -p "$output_dir/scans"
 mkdir -p "$output_dir/httprobe"
 mkdir -p "$output_dir/potential_takeovers"
+mkdir -p "$output_dir/technologys"
 mkdir -p "$output_dir/wayback/params"
 mkdir -p "$output_dir/wayback/extensions"
 
@@ -45,6 +46,8 @@ check_and_create_file "$output_dir/httprobe/alive.txt"
 check_and_create_file "$output_dir/final.txt"
 check_and_create_file "$output_dir/gau/gauJS.txt"
 check_and_create_file "$output_dir/mantra/api_cred.txt"
+check_and_create_file "$output_dir/technologys/tech_detected.txt"
+check_and_create_file "$output_dir/scans/naabu-full.txt"
 check_and_create_file "$output_dir/potential_takeovers/potential_takeovers.txt"
 
 # Function to check if a tool is installed
@@ -61,7 +64,12 @@ for tool in "${tools[@]}"; do
     check_tool "$tool"
 done
 
-# Perform subdomain reconnaissance
+# Perform reconnaissance
+echo
+echo "#############################################"
+echo "########### Start - Reconnaissance ##########"
+echo "#############################################"
+echo
 
 echo "[+] Harvesting subdomains with assetfinder..."
 assetfinder "$target_url" >> "$output_dir/recon/assets.txt"
@@ -84,13 +92,16 @@ rm "$output_dir/httprobe/a.txt"
 echo "[+] Checking for possible subdomain takeover..."
 subjack -w "$output_dir/final.txt" -t 100 -timeout 30 -ssl -o "$output_dir/potential_takeovers/potential_takeovers.txt"
 
+echo "[+] Scanning for technologys...."
+whatweb -i "$output_dir/final.txt" -a 3 -q --colour always --no-errors --log-verbose "$output_dir/technologys/tech_detected.txt"
+
 echo "[+] Scanning for open ports with Naabu..."
 naabu -hL "$output_dir/httprobe/alive.txt" -verify -ec -rate 9000 -retries 1 -p 0-65535 -oA "$output_dir/scans/naabu-full.txt"
 
 echo "[+] Scraping JS files with Gau..."
 cat "$output_dir/final.txt" | gau | grep -iE '\.js' | grep -ivE '\.json' | sort -u >> "$output_dir/gau/gauJS.txt"
 
-echo "[+] Scraping Mantra API key or cred..."
+echo "[+] Scraping API key or cred with Mantra..."
 cat "$output_dir/gau/gauJS.txt" | mantra >> "$output_dir/mantra/api_cred.txt"
 
 echo "[+] Scraping wayback data..."
@@ -112,6 +123,30 @@ done
 
 echo "[+] Capturing screenshots with gowitness..."
 gowitness file -s "$output_dir/final.txt" -d "$output_dir/gowitness/screenshots" -t 50
+
+echo
+echo "#############################################"
+echo "############## Final - Results ##############"
+echo "#############################################"
+echo
+
+echo "[+] Harvesting Subdomain results are saved in: $output_dir/final.txt"
+
+echo "[+] Checking for possible subdomain takeovers are saved in: $output_dir/potential_takeovers/potential_takeovers.txt"
+
+echo "[+] Detected technolgy informations saved in: $output_dir/technologys/tech_detected.txt"
+
+echo "[+] All open ports informations saved in: $output_dir/scans/naabu-full.txt"
+
+echo "[+] Scaped JS file links saved in: $output_dir/gau/gauJS.txt"
+
+echo "[+] Scraped API key or cred saved in: $output_dir/mantra/api_cred.txt"
+
+echo "[+] Wayback data saved in: $output_dir/wayback/wayback_output.txt"
+
+echo "[+] All possible parameters found in wayback data saved in: $output_dir/wayback/params/wayback_params.txt"
+
+echo "[+] All js/php/aspx/jsp/json files from wayback output saved in: $output_dir/wayback/extensions"
 
 echo "[+] Screenshots captured by gowitness are saved in: $output_dir/gowitness/screenshots"
 
