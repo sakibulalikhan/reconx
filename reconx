@@ -59,7 +59,7 @@ check_tool() {
 }
 
 # Check for required tools
-tools=("assetfinder" "amass" "jq" "httprobe" "subjack" "nmap" "naabu" "waybackurls" "gowitness" "mantra")
+tools=("assetfinder" "amass" "jq" "httprobe" "subjack" "nmap" "naabu" "waybackurls" "gowitness" "mantra" "whatweb")
 for tool in "${tools[@]}"; do
     check_tool "$tool"
 done
