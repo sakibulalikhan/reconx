@@ -11,12 +11,12 @@ ReconX is a powerful Bash script designed for advanced subdomain reconnaissance.
 
 ## Table of Contents
 
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
+- ### [Features](#features)
+- ### [Requirements](#requirements)
+- ### [Installation](#installation)
+- ### [Usage](#usage)
+- ### [Contributing](#contributing)
+- ### [License](#license)
 
 ## Features
 
@@ -67,3 +67,6 @@ This project is licensed under the [MIT License](https://github.com/sakibulalikh
 
 ## Support Me:
 <a href="https://www.buymeacoffee.com/sakibulalikhan" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+
+
+[def]: #license
