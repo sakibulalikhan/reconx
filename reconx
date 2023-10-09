@@ -34,6 +34,7 @@ output_dir="$target_url/recon"
 mkdir -p "$output_dir/gowitness"
 mkdir -p "$output_dir/mantra"
 mkdir -p "$output_dir/gau"
+mkdir -p "$output_dir/subdomains
 mkdir -p "$output_dir/scans"
 mkdir -p "$output_dir/httprobe"
 mkdir -p "$output_dir/potential_takeovers"
@@ -43,7 +44,7 @@ mkdir -p "$output_dir/wayback/extensions"
 
 # Initialize necessary files if they don't exist
 check_and_create_file "$output_dir/httprobe/alive.txt"
-check_and_create_file "$output_dir/final.txt"
+check_and_create_file "$output_dir/subdomains/final.txt"
 check_and_create_file "$output_dir/gau/gauJS.txt"
 check_and_create_file "$output_dir/mantra/api_cred.txt"
 check_and_create_file "$output_dir/technologys/tech_detected.txt"
@@ -73,39 +74,39 @@ echo
 
 echo "[+] Harvesting subdomains with assetfinder..."
 assetfinder "$target_url" >> "$output_dir/recon/assets.txt"
-cat "$output_dir/recon/assets.txt" | grep "$target_url" >> "$output_dir/final.txt"
+cat "$output_dir/recon/assets.txt" | grep "$target_url" >> "$output_dir/subdomains/final.txt"
 rm "$output_dir/recon/assets.txt"
 
 echo "[+] Double-checking for subdomains with amass..."
 amass enum -d "$target_url" >> "$output_dir/recon/f.txt"
-sort -u "$output_dir/recon/f.txt" >> "$output_dir/recon/final.txt"
+sort -u "$output_dir/recon/f.txt" >> "$output_dir/recon/subdomains/final.txt"
 rm "$output_dir/recon/f.txt"
 
 echo "[+] Harvesting subdomains using SSL cert with crt.sh..."
-curl -s "https://crt.sh/?q=%.$target_url&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u >> "$output_dir/final.txt"
+curl -s "https://crt.sh/?q=%.$target_url&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u >> "$output_dir/subdomains/final.txt"
 
 echo "[+] Probing for alive domains..."
-cat "$output_dir/final.txt" | sort -u | httprobe -s -p http:81 -p https:443 | sed 's/https\?:\/\///' | tr -d ':443' >> "$output_dir/httprobe/a.txt"
+cat "$output_dir/subdomains/final.txt" | sort -u | httprobe -s -p http:81 -p https:443 | sed 's/https\?:\/\///' | tr -d ':443' >> "$output_dir/httprobe/a.txt"
 sort -u "$output_dir/httprobe/a.txt" > "$output_dir/httprobe/alive.txt"
 rm "$output_dir/httprobe/a.txt"
 
 echo "[+] Checking for possible subdomain takeover..."
-subjack -w "$output_dir/final.txt" -t 100 -timeout 30 -ssl -o "$output_dir/potential_takeovers/potential_takeovers.txt"
+subjack -w "$output_dir/subdomains/final.txt" -t 100 -timeout 30 -ssl -o "$output_dir/potential_takeovers/potential_takeovers.txt"
 
 echo "[+] Scanning for technologys...."
-whatweb -i "$output_dir/final.txt" -a 3 -q --colour always --no-errors --log-verbose "$output_dir/technologys/tech_detected.txt"
+whatweb -i "$output_dir/subdomains/final.txt" -a 3 -q --colour always --no-errors --log-verbose "$output_dir/technologys/tech_detected.txt"
 
 echo "[+] Scanning for open ports with Naabu..."
 naabu -hL "$output_dir/httprobe/alive.txt" -verify -ec -rate 9000 -retries 1 -p 0-65535 -oA "$output_dir/scans/naabu-full.txt"
 
 echo "[+] Scraping JS files with Gau..."
-cat "$output_dir/final.txt" | gau | grep -iE '\.js' | grep -ivE '\.json' | sort -u >> "$output_dir/gau/gauJS.txt"
+cat "$output_dir/subdomains/final.txt" | gau | grep -iE '\.js' | grep -ivE '\.json' | sort -u >> "$output_dir/gau/gauJS.txt"
 
 echo "[+] Scraping API key or cred with Mantra..."
 cat "$output_dir/gau/gauJS.txt" | mantra >> "$output_dir/mantra/api_cred.txt"
 
 echo "[+] Scraping wayback data..."
-cat "$output_dir/final.txt" | waybackurls >> "$output_dir/wayback/wayback_output.txt"
+cat "$output_dir/subdomains/final.txt" | waybackurls >> "$output_dir/wayback/wayback_output.txt"
 sort -u "$output_dir/wayback/wayback_output.txt"
 
 echo "[+] Pulling and compiling all possible parameters found in wayback data..."
@@ -122,7 +123,7 @@ for line in $(cat "$output_dir/wayback/wayback_output.txt"); do
 done
 
 echo "[+] Capturing screenshots with gowitness..."
-gowitness file -s "$output_dir/final.txt" -d "$output_dir/gowitness/screenshots" -t 50
+gowitness file -s "$output_dir/subdomains/final.txt" -d "$output_dir/gowitness/screenshots" -t 50
 
 echo
 echo "#############################################"
@@ -130,7 +131,7 @@ echo "############## Final - Results ##############"
 echo "#############################################"
 echo
 
-echo "[+] Harvesting Subdomain results are saved in: $output_dir/final.txt"
+echo "[+] Harvesting Subdomain results are saved in: $output_dir/subdomains/final.txt"
 
 echo "[+] Checking for possible subdomain takeovers are saved in: $output_dir/potential_takeovers/potential_takeovers.txt"
 

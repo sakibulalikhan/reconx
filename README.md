@@ -25,9 +25,10 @@ ReconX is a powerful Bash script designed for advanced subdomain reconnaissance.
 - Detection of potential subdomain takeover vulnerabilities.
 - Scanning for open ports with Naabu.
 - Scraping JavaScript files from discovered subdomains using Gau.
-- Scraping Mantra API keys or credentials from JavaScript files.
+- Scraping API keys or credentials from JavaScript files.
 - Gathering wayback data to find hidden parameters and extensions.
 - Capturing screenshots of discovered subdomains using Gowitness.
+- Detecting technologies used on discovered subdomains.
 
 ## Requirements
 
@@ -43,6 +44,7 @@ Before using ReconX, make sure you have the following tools installed:
 - [waybackurls](https://github.com/tomnomnom/waybackurls)
 - [gowitness](https://github.com/sensepost/gowitness)
 - [mantra](https://github.com/MrEmpy/Mantra)
+- [whatweb](https://github.com/urbanadventurer/WhatWeb)
 
 You can install these tools using package managers or download them manually from their official sources.
 
