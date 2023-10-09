@@ -41,6 +41,7 @@ mkdir -p "$output_dir/potential_takeovers"
 mkdir -p "$output_dir/technologys"
 mkdir -p "$output_dir/wayback/params"
 mkdir -p "$output_dir/wayback/extensions"
+mkdir -p "$output_dir/waf"
 
 # Initialize necessary files if they don't exist
 check_and_create_file "$output_dir/httprobe/alive.txt"
@@ -50,6 +51,7 @@ check_and_create_file "$output_dir/mantra/api_cred.txt"
 check_and_create_file "$output_dir/technologys/tech_detected.txt"
 check_and_create_file "$output_dir/scans/naabu-full.txt"
 check_and_create_file "$output_dir/potential_takeovers/potential_takeovers.txt"
+check_and_create_file "$output_dir/waf/detected_waf.txt"
 
 # Function to check if a tool is installed
 check_tool() {
@@ -60,7 +62,7 @@ check_tool() {
 }
 
 # Check for required tools
-tools=("assetfinder" "amass" "jq" "httprobe" "subjack" "nmap" "naabu" "waybackurls" "gowitness" "mantra" "whatweb")
+tools=("assetfinder" "amass" "jq" "httprobe" "subjack" "nmap" "naabu" "waybackurls" "gowitness" "mantra" "whatweb" "wafw00f")
 for tool in "${tools[@]}"; do
     check_tool "$tool"
 done
@@ -124,6 +126,9 @@ done
 
 echo "[+] Capturing screenshots with gowitness..."
 gowitness file -s "$output_dir/subdomains/final.txt" -d "$output_dir/gowitness/screenshots" -t 50
+
+echo "[+] Fingerprinting The Web Application Firewall..."
+wafw00f -i "$output_dir/subdomains/final.txt" -v | grep "The site" > "$output_dir/waf/detected_waf.txt"
 
 echo
 echo "#############################################"

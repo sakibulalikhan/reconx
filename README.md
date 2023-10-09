@@ -29,22 +29,18 @@ ReconX is a powerful Bash script designed for advanced subdomain reconnaissance.
 - Gathering wayback data to find hidden parameters and extensions.
 - Capturing screenshots of discovered subdomains using Gowitness.
 - Detecting technologies used on discovered subdomains.
+- Fingerprinting The Web Application Firewall on discovered subdomains.
 
 ## Requirements
 
 Before using ReconX, make sure you have the following tools installed:
 
-- [assetfinder](https://github.com/tomnomnom/assetfinder)
-- [amass](https://github.com/owasp-amass/amass)
-- [jq](https://jqlang.github.io/jq/)
-- [httprobe](https://github.com/tomnomnom/httprobe)
-- [subjack](https://github.com/haccer/subjack)
-- [nmap](https://github.com/nmap/nmap)
-- [naabu](https://github.com/projectdiscovery/naabu)
-- [waybackurls](https://github.com/tomnomnom/waybackurls)
-- [gowitness](https://github.com/sensepost/gowitness)
-- [mantra](https://github.com/MrEmpy/Mantra)
-- [whatweb](https://github.com/urbanadventurer/WhatWeb)
+|                                                             |                                                             |                                                             |
+| ----------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| [assetfinder](https://github.com/tomnomnom/assetfinder)     | [nmap](https://github.com/nmap/nmap)                        | [subjack](https://github.com/haccer/subjack)                |
+| [amass](https://github.com/owasp-amass/amass)               | [naabu](https://github.com/projectdiscovery/naabu)          | [waybackurls](https://github.com/tomnomnom/waybackurls)     |
+| [jq](https://jqlang.github.io/jq/)                          | [gowitness](https://github.com/sensepost/gowitness)         | [httprobe](https://github.com/tomnomnom/httprobe)           | 
+| [wafw00f](https://github.com/EnableSecurity/wafw00f)        | [whatweb](https://github.com/urbanadventurer/WhatWeb)       | [mantra](https://github.com/MrEmpy/Mantra)                  |
 
 You can install these tools using package managers or download them manually from their official sources.
 
