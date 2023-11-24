@@ -4,9 +4,11 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/sakibulalikhan/reconx)
 ![GitHub](https://img.shields.io/github/license/sakibulalikhan/reconx)
 
-ReconX is a powerful Bash script designed for advanced subdomain reconnaissance. It automates various subdomain discovery and analysis techniques to help you gather information about a target domain, including subdomains, alive domains, potential subdomain takeovers, open ports, JavaScript file scraping, and more.
+ReconX is a powerful Bash script designed for advanced subdomain reconnaissance. It automates various subdomain discovery and analysis techniques to help you gather information about a target domain, including subdomains, alive domains, potential subdomain takeovers, open ports, JavaScript file scraping, Finding parameters, Taking automatic screenshots of the alive hosts, and more.
 
-![image](https://github.com/sakibulalikhan/reconx/assets/75080608/e9473884-5003-4c20-a506-359d02e3cb36)
+![image](https://github.com/sakibulalikhan/reconx/assets/75080608/3841c55e-984c-4021-a879-8f97a3539a4f)
+
+
 
 
 ## Table of Contents
@@ -26,7 +28,7 @@ ReconX is a powerful Bash script designed for advanced subdomain reconnaissance.
 - Scanning for open ports with Naabu.
 - Scraping JavaScript files from discovered subdomains using Gau.
 - Scraping API keys or credentials from JavaScript files.
-- Gathering wayback data to find hidden parameters and extensions.
+- Gathering Wayback data to find hidden parameters and extensions.
 - Capturing screenshots of discovered subdomains using Gowitness.
 - Detecting technologies used on discovered subdomains.
 - Fingerprinting The Web Application Firewall on discovered subdomains.
@@ -48,15 +50,33 @@ You can install these tools using package managers or download them manually fro
 ## Installation
 
    ```bash
-   git clone https://github.com/sakibulalikhan/reconx.git && cd reconx && sudo mv reconx /usr/bin && sudo chmod +x /usr/bin/reconx
+   wget clone https://raw.githubusercontent.com/sakibulalikhan/reconx/main/reconx && sudo mv reconx /usr/bin/ && sudo chmod +x /usr/bin/reconx && reconx
    ```
-## Usage
-To use ReconX, simply provide the target URL as an argument when running the script:
+
+## Options:
 
   ```bash
-   reconx target.com
+  -t, --target <domain>    Scan a single domain
+  -l, --list <file>        Scan a list of domains from a file
+  -h, --help               Display this help message
   ```
-Replace target.com with the domain you want to perform reconnaissance on. ReconX will create a directory structure for your results and provide detailed information about the target domain.
+## Usage
+To use ReconX, just follow the below steps to run the script:
+
+* For single domain
+```bash
+reconx -t terget.com
+```
+* For multiple or list of domains
+```bash
+reconx -l domainlists.txt
+```
+* Stuck? Want to know the script options?
+```bash
+reconx -h
+```
+
+Replace __target.com__ or __domainlists.txt__ with the domain or domain lists you want to perform reconnaissance on. ReconX will create a directory structure for your results and provide detailed information about the target domain.
 
 ## Contributing
 Contributions are welcome! If you have any suggestions, improvements, or bug fixes, please create an issue or submit a pull request.
