@@ -13,20 +13,84 @@ _  _, _/ /  __// /__  / /_/ /_  / / /_    |
 
 EOF
 
-# Check if a URL is provided as an argument
-if [ -z "$1" ]; then
-    echo "Usage: $0 <target_url>"
+# Function to display help
+display_help() {
+    echo "Usage: $0 [OPTIONS]"
+    echo
+    echo "Options:"
+    echo "  -t, --target <domain>    Scan a single domain"
+    echo "  -l, --list <file>        Scan a list of domains from a file"
+    echo "  -h, --help               Display this help message"
     exit 1
+}
+
+# Check if any user flags are provided
+if [ "$#" -eq 0 ]; then
+    display_help
 fi
 
-target_url="$1"
-output_dir="$target_url/recon"
+# Initialize variables
+target_url=""
+domain_list_file=""
+script_name="$(basename "$0" .sh)"
+output_dir="${script_name}_output"
 
-# Create necessary directories if they don't exist
-mkdir -p "$output_dir/gowitness" "$output_dir/mantra" "$output_dir/gau" \
-         "$output_dir/subdomains" "$output_dir/scans" "$output_dir/httprobe" \
-         "$output_dir/potential_takeovers" "$output_dir/technologys" \
-         "$output_dir/wayback/params" "$output_dir/wayback/extensions" "$output_dir/waf"
+# Parse user flags
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -t|--target)
+            if [ -z "$2" ]; then
+                echo "Error: Please provide a target domain after -t or --target."
+                exit 1
+            fi
+            target_url="$2"
+            shift 2
+            ;;
+        -l|--list)
+            if [ -z "$2" ]; then
+                echo "Error: Please provide a file with a list of domains after -l or --list."
+                exit 1
+            fi
+            domain_list_file="$2"
+            shift 2
+            ;;
+        -h|--help)
+            display_help
+            ;;
+        *)
+            echo "Error: Unknown option $1"
+            display_help
+            ;;
+    esac
+done
+
+# Check if a target URL or domain list file is provided
+if [ -z "$target_url" ] && [ -z "$domain_list_file" ]; then
+    echo "Error: Please provide a target domain or a file with a list of domains."
+    display_help
+fi
+
+# Function to create a directory for each domain
+create_domain_dir() {
+    local domain="$1"
+    mkdir -p "$output_dir/$domain"
+    mkdir -p "$output_dir/$domain/gowitness/screenshots" "$output_dir/$domain/mantra" "$output_dir/$domain/gau" \
+             "$output_dir/$domain/subdomains" "$output_dir/$domain/scans" "$output_dir/$domain/httprobe" \
+             "$output_dir/$domain/potential_takeovers" "$output_dir/$domain/technologys" \
+             "$output_dir/$domain/wayback/params" "$output_dir/$domain/wayback/extensions" "$output_dir/$domain/waf"
+}
+
+# Set output directory based on the script name
+output_dir="${script_name}_output"
+if [ -n "$target_url" ]; then
+    # For a single domain, create a directory based on the domain name
+    create_domain_dir "$(basename "$target_url")"
+else
+    # For multiple domains, create a directory for each domain in the list
+    while IFS= read -r domain; do
+        create_domain_dir "$domain"
+    done < "$domain_list_file"
+fi
 
 # Function to check if a tool is installed
 check_tool() {
@@ -49,98 +113,134 @@ echo "########### Start - Reconnaissance ##########"
 echo "#############################################"
 echo
 
-# Harvesting subdomains with assetfinder
-echo "[+] Harvesting subdomains with assetfinder..."
-assetfinder "$target_url" >> "$output_dir/subdomains/final.txt"
+# Function to perform reconnaissance for a single domain
+single_domain_recon() {
+    local target="$1"
 
-# Double-checking for subdomains with amass
-echo "[+] Double-checking for subdomains with amass..."
-amass enum -d "$target_url" >> "$output_dir/subdomains/final.txt"
+    # Change to the domain directory
+    cd "$output_dir/$target" || { echo "Error: Failed to change to directory $output_dir/$target"; exit 1; }
 
-# Harvesting subdomains with subfinder
-echo "[+] Harvesting subdomains with subfinder..."
-subfinder -d "$target_url" >> "$output_dir/subdomains/final.txt"
+    # Harvesting subdomains with assetfinder
+    echo "[+] Harvesting subdomains with assetfinder..."
+    assetfinder "$target" >> "subdomains/final.txt"
 
-# Harvesting subdomains using SSL cert with crt.sh
-echo "[+] Harvesting subdomains using SSL cert with crt.sh..."
-curl -s "https://crt.sh/?q=%.$target_url&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u >> "$output_dir/subdomains/final.txt"
+    # Double-checking for subdomains with amass
+    echo "[+] Double-checking for subdomains with amass..."
+    amass enum -d "$target" >> "subdomains/final.txt"
 
-# Probing for alive domains
-echo "[+] Probing for alive domains..."
-cat "$output_dir/subdomains/final.txt" | sort -u | httprobe -s -p http:81 -p https:443 | sed 's/https\?:\/\///' | tr -d ':443' > "$output_dir/httprobe/alive.txt"
+    # Harvesting subdomains with subfinder
+    echo "[+] Harvesting subdomains with subfinder..."
+    subfinder -d "$target" >> "subdomains/final.txt"
 
-# Checking for possible subdomain takeover
-echo "[+] Checking for possible subdomain takeover..."
-subjack -w "$output_dir/subdomains/final.txt" -t 100 -timeout 30 -ssl -o "$output_dir/potential_takeovers/potential_takeovers.txt"
+    # Harvesting subdomains using SSL cert with crt.sh
+    echo "[+] Harvesting subdomains using SSL cert with crt.sh..."
+    curl -s "https://crt.sh/?q=%.$target&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u >> "subdomains/final.txt"
 
-# Scanning for technologys
-echo "[+] Scanning for technologys...."
-whatweb -i "$output_dir/subdomains/final.txt" -a 3 -q --colour always --no-errors --log-verbose "$output_dir/technologys/tech_detected.txt"
+    # Probing for alive domains
+    echo "[+] Probing for alive domains..."
+    cat "subdomains/final.txt" | sort -u | httprobe -s -p http:81 -p https:443 | sed 's/https\?:\/\///' | tr -d ':443' > "httprobe/alive.txt"
 
-# Scanning for open ports with Naabu
-echo "[+] Scanning for open ports with Naabu..."
-naabu -host "$output_dir/httprobe/alive.txt" -verify -rate 9000 -retries 1 -p 0-65535 -oA "$output_dir/scans/naabu-full.txt"
+    # Checking for possible subdomain takeover
+    echo "[+] Checking for possible subdomain takeover..."
+    subjack -w "subdomains/final.txt" -t 100 -timeout 30 -ssl -o "potential_takeovers/potential_takeovers.txt"
 
-# Scraping JS files with Gau
-echo "[+] Scraping JS files with Gau..."
-cat "$output_dir/subdomains/final.txt" | gau | grep -iE '\.js' | grep -ivE '\.json' | sort -u >> "$output_dir/gau/gauJS.txt"
+    # Scanning for technologys
+    echo "[+] Scanning for technologys...."
+    whatweb -i "subdomains/final.txt" -a 3 -q --colour always --no-errors --log-verbose "technologys/tech_detected.txt"
 
-# Scraping API key or cred with Mantra
-echo "[+] Scraping API key or cred with Mantra..."
-cat "$output_dir/gau/gauJS.txt" | mantra >> "$output_dir/mantra/api_cred.txt"
+    # Scanning for open ports with Naabu
+    echo "[+] Scanning for open ports with Naabu..."
+    naabu -host "httprobe/alive.txt" -verify -rate 9000 -retries 1 -p 0-65535 -o "scans/naabu-full.txt"
 
-# Scraping wayback data
-echo "[+] Scraping wayback data..."
-cat "$output_dir/subdomains/final.txt" | waybackurls >> "$output_dir/wayback/wayback_output.txt"
-sort -u "$output_dir/wayback/wayback_output.txt"
+    # Scraping JS files with Gau
+    echo "[+] Scraping JS files with Gau..."
+    cat "subdomains/final.txt" | gau | grep -iE '\.js' | grep -ivE '\.json' | sort -u >> "gau/gauJS.txt"
 
-# Pulling and compiling all possible parameters found in wayback data
-echo "[+] Pulling and compiling all possible parameters found in wayback data..."
-cat "$output_dir/wayback/wayback_output.txt" | grep '?*=' | cut -d '=' -f 1 | sort -u >> "$output_dir/wayback/params/wayback_params.txt"
+    # Scraping API key or cred with Mantra
+    echo "[+] Scraping API key or cred with Mantra..."
+    cat "gau/gauJS.txt" | mantra >> "mantra/api_cred.txt"
 
-# Pulling and compiling js/php/aspx/jsp/json files from wayback output
-echo "[+] Pulling and compiling js/php/aspx/jsp/json files from wayback output..."
-while IFS= read -r line; do
-    ext="${line##*.}"
-    case "$ext" in
-        js|html|json|php|aspx)
-            echo "$line" >> "$output_dir/wayback/extensions/$ext.txt"
-            ;;
-    esac
-done < "$output_dir/wayback/wayback_output.txt"
+    # Scraping wayback data
+    echo "[+] Scraping wayback data..."
+    cat "subdomains/final.txt" | waybackurls >> "wayback/wayback_output.txt"
+    sort -u "wayback/wayback_output.txt"
 
-# Capturing screenshots with gowitness
-echo "[+] Capturing screenshots with gowitness..."
-gowitness file "$output_dir/subdomains/final.txt" -d "$output_dir/gowitness/screenshots" -t 50
+    # Pulling and compiling all possible parameters found in wayback data
+    echo "[+] Pulling and compiling all possible parameters found in wayback data..."
+    cat "wayback/wayback_output.txt" | grep '?*=' | cut -d '=' -f 1 | sort -u >> "wayback/params/wayback_params.txt"
 
-# Fingerprinting The Web Application Firewall
-echo "[+] Fingerprinting The Web Application Firewall..."
-wafw00f -i "$output_dir/subdomains/final.txt" -v | grep "The site" > "$output_dir/waf/detected_waf.txt"
+    # Pulling and compiling js/php/aspx/jsp/json files from wayback output
+    echo "[+] Pulling and compiling js/php/aspx/jsp/json files from wayback output..."
+    while IFS= read -r line; do
+        ext="${line##*.}"
+        case "$ext" in
+            js|html|json|php|aspx)
+                echo "$line" >> "wayback/extensions/$ext.txt"
+                ;;
+        esac
+    done < "wayback/wayback_output.txt"
 
+    # Capturing screenshots with gowitness
+    echo "[+] Capturing screenshots with gowitness..."
+    gowitness file "subdomains/final.txt" -d "gowitness/screenshots" -t 50
+
+    # Fingerprinting The Web Application Firewall
+    echo "[+] Fingerprinting The Web Application Firewall..."
+    wafw00f -i "subdomains/final.txt" -v | grep "The site" > "waf/detected_waf.txt"
+
+    # Move back to the script directory
+    cd - || { echo "Error: Failed to change back to the script directory"; exit 1; }
+}
+
+# Function to perform reconnaissance for a list of domains
+domain_list_recon() {
+    local list_file="$1"
+
+    while IFS= read -r domain; do
+        echo
+        echo "--------------------------------------------"
+        echo "Scanning domain: $domain"
+        echo "--------------------------------------------"
+        # Create a directory for each domain
+        create_domain_dir "$domain"
+        single_domain_recon "$domain"
+    done < "$list_file"
+}
+
+# Determine the type of scan based on user input
+if [ -n "$target_url" ]; then
+    # For a single domain, create a directory based on the domain name
+    create_domain_dir "$(basename "$target_url")"
+    single_domain_recon "$target_url"
+elif [ -n "$domain_list_file" ]; then
+    domain_list_recon "$domain_list_file"
+fi
+
+# Display completion message
 echo
 echo "#############################################"
 echo "############## Final - Results ##############"
 echo "#############################################"
 echo
 
-echo "[+] Harvesting Subdomain results are saved in: $output_dir/subdomains/final.txt"
+echo "[+] Harvesting Subdomain results are saved in: $output_dir/*/subdomains/final.txt"
 
-echo "[+] Checking for possible subdomain takeovers are saved in: $output_dir/potential_takeovers/potential_takeovers.txt"
+echo "[+] Checking for possible subdomain takeovers are saved in: $output_dir/*/potential_takeovers/potential_takeovers.txt"
 
-echo "[+] Detected technology information saved in: $output_dir/technologys/tech_detected.txt"
+echo "[+] Detected technology information saved in: $output_dir/*/technologys/tech_detected.txt"
 
-echo "[+] All open ports information saved in: $output_dir/scans/naabu-full.txt"
+echo "[+] All open ports information saved in: $output_dir/*/scans/naabu-full.txt"
 
-echo "[+] Scraped JS file links saved in: $output_dir/gau/gauJS.txt"
+echo "[+] Scraped JS file links saved in: $output_dir/*/gau/gauJS.txt"
 
-echo "[+] Scraped API key or cred saved in: $output_dir/mantra/api_cred.txt"
+echo "[+] Scraped API key or cred saved in: $output_dir/*/mantra/api_cred.txt"
 
-echo "[+] Wayback data saved in: $output_dir/wayback/wayback_output.txt"
+echo "[+] Wayback data saved in: $output_dir/*/wayback/wayback_output.txt"
 
-echo "[+] All possible parameters found in wayback data saved in: $output_dir/wayback/params/wayback_params.txt"
+echo "[+] All possible parameters found in wayback data saved in: $output_dir/*/wayback/params/wayback_params.txt"
 
-echo "[+] All js/php/aspx/jsp/json files from wayback output saved in: $output_dir/wayback/extensions"
+echo "[+] All js/php/aspx/jsp/json files from wayback output saved in: $output_dir/*/wayback/extensions"
 
-echo "[+] Screenshots captured by gowitness are saved in: $output_dir/gowitness/screenshots"
+echo "[+] Screenshots captured by gowitness are saved in: $output_dir/*/gowitness/screenshots"
 
 echo "[+] Script completed. & Thanks for using ReconX @sakibulalikhan."
