@@ -40,7 +40,8 @@ Before using ReconX, make sure you have the following tools installed:
 | [assetfinder](https://github.com/tomnomnom/assetfinder)     | [nmap](https://github.com/nmap/nmap)                        | [subjack](https://github.com/haccer/subjack)                |
 | [amass](https://github.com/owasp-amass/amass)               | [naabu](https://github.com/projectdiscovery/naabu)          | [waybackurls](https://github.com/tomnomnom/waybackurls)     |
 | [jq](https://jqlang.github.io/jq/)                          | [gowitness](https://github.com/sensepost/gowitness)         | [httprobe](https://github.com/tomnomnom/httprobe)           | 
-| [wafw00f](https://github.com/EnableSecurity/wafw00f)        | [whatweb](https://github.com/urbanadventurer/WhatWeb)       | [mantra](https://github.com/MrEmpy/Mantra)                  |         | [subfinder](https://github.com/projectdiscovery/subfinder)  |
+| [wafw00f](https://github.com/EnableSecurity/wafw00f)        | [whatweb](https://github.com/urbanadventurer/WhatWeb)       | [mantra](https://github.com/MrEmpy/Mantra)                  |
+| [subfinder](https://github.com/projectdiscovery/subfinder)  |
 
 You can install these tools using package managers or download them manually from their official sources.
 
